@@ -20,6 +20,8 @@ import { openDialog } from '../dialog/actions';
 import { JitsiTrackErrors, JitsiTrackEvents, browser } from '../lib-jitsi-meet';
 import { createLocalTrack } from '../lib-jitsi-meet/functions.any';
 import { gumPending, setScreenshareMuted } from '../media/actions';
+import { getLocalParticipant } from '../participants/functions';
+
 import {
     CAMERA_FACING_MODE,
     MEDIA_TYPE,
@@ -119,6 +121,19 @@ async function _maybeApplyAudioMixerEffect(desktopAudioTrack: any, state: IRedux
  * @param {Store} store - The redux store.
  * @returns {void}
  */
+// async function _toggleScreenSharing(
+//         {
+//             enabled,
+//             audioOnly = false,
+//             shareOptions = {}
+//         }: IToggleScreenSharingOptions,
+//         store: IStore
+// ): Promise<void> {
+//     const { dispatch, getState } = store;
+//     const state = getState();
+//     const audioOnlySharing = isAudioOnlySharing(state);
+//     const screenSharing = isScreenVideoShared(state);
+//     const conference = getCurrentConference(state);
 async function _toggleScreenSharing(
         {
             enabled,
@@ -129,9 +144,20 @@ async function _toggleScreenSharing(
 ): Promise<void> {
     const { dispatch, getState } = store;
     const state = getState();
+
+    const localParticipant = getLocalParticipant(state);
+    
+    // ❌ Block non-moderators
+    if (localParticipant?.role !== 'moderator') {
+        console.warn('Only moderators can share screen.');
+        return;
+    }
+
     const audioOnlySharing = isAudioOnlySharing(state);
     const screenSharing = isScreenVideoShared(state);
     const conference = getCurrentConference(state);
+   
+
     const localAudio = getLocalJitsiAudioTrack(state);
     const localScreenshare = getLocalDesktopTrack(state['features/base/tracks']);
 

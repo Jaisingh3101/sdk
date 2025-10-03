@@ -1,6 +1,7 @@
 import { IStore } from '../app/types';
 import { getCurrentConference } from '../base/conference/functions';
 import { hideDialog, openDialog } from '../base/dialog/actions';
+
 import { getLocalParticipant } from '../base/participants/functions';
 
 import {
@@ -110,16 +111,43 @@ export function stopSharedVideo() {
  *
  * @returns {Function}
  */
+// export function playSharedVideo(videoUrl: string) {
+//     return (dispatch: IStore['dispatch'], getState: IStore['getState']) => {
+//         if (!isSharedVideoEnabled(getState())) {
+//             return;
+//         }
+//         const conference = getCurrentConference(getState());
+
+//         if (conference) {
+//             const localParticipant = getLocalParticipant(getState());
+
+//             // we will send the command and will create local video fake participant
+//             // and start playing once we receive ourselves the command
+//             sendShareVideoCommand({
+//                 conference,
+//                 id: videoUrl,
+//                 localParticipantId: localParticipant?.id,
+//                 status: PLAYBACK_START,
+//                 time: 0
+//             });
+//         }
+//     };
+// }
 export function playSharedVideo(videoUrl: string) {
     return (dispatch: IStore['dispatch'], getState: IStore['getState']) => {
         if (!isSharedVideoEnabled(getState())) {
             return;
         }
         const conference = getCurrentConference(getState());
+        const localParticipant = getLocalParticipant(getState());
+
+        // ❌ Only moderators can start shared video
+        if (localParticipant?.role !== 'moderator') {
+            console.warn('Only moderators can start shared video.');
+            return;
+        }
 
         if (conference) {
-            const localParticipant = getLocalParticipant(getState());
-
             // we will send the command and will create local video fake participant
             // and start playing once we receive ourselves the command
             sendShareVideoCommand({
@@ -133,16 +161,37 @@ export function playSharedVideo(videoUrl: string) {
     };
 }
 
+
 /**
  *
  * Stops playing a shared video.
  *
  * @returns {Function}
  */
+// export function toggleSharedVideo() {
+//     return (dispatch: IStore['dispatch'], getState: IStore['getState']) => {
+//         const state = getState();
+//         const { status = '' } = state['features/shared-video'];
+
+//         if ([ PLAYBACK_STATUSES.PLAYING, PLAYBACK_START, PLAYBACK_STATUSES.PAUSED ].includes(status)) {
+//             dispatch(stopSharedVideo());
+//         } else {
+//             dispatch(showSharedVideoDialog((id: string) => dispatch(playSharedVideo(id))));
+//         }
+//     };
+// }
+
 export function toggleSharedVideo() {
     return (dispatch: IStore['dispatch'], getState: IStore['getState']) => {
         const state = getState();
         const { status = '' } = state['features/shared-video'];
+        const localParticipant = getLocalParticipant(state);
+
+        // ❌ Only moderators can toggle shared video
+        if (localParticipant?.role !== 'moderator') {
+            console.warn('Only moderators can toggle shared video.');
+            return;
+        }
 
         if ([ PLAYBACK_STATUSES.PLAYING, PLAYBACK_START, PLAYBACK_STATUSES.PAUSED ].includes(status)) {
             dispatch(stopSharedVideo());
@@ -151,6 +200,7 @@ export function toggleSharedVideo() {
         }
     };
 }
+
 
 /**
  * Sets the allowed URL domains of the shared video.

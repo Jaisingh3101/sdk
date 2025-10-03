@@ -121,43 +121,11 @@ MiddlewareRegistry.register(store => next => action => {
         break;
     }
     case PARTICIPANT_JOINED: {
-        const result = next(action);
-        const { participant: p } = action;
-        const { conference } = state['features/base/conference'];
-
-        // Do not display notifications for the virtual screenshare and whiteboard tiles.
-        if (conference
-            && !p.local
-            && !isScreenShareParticipant(p)
-            && !isWhiteboardParticipant(p)
-            && !joinLeaveNotificationsDisabled()
-            && !p.isReplacing) {
-            dispatch(showParticipantJoinedNotification(
-                getParticipantDisplayName(state, p.id)
-            ));
-        }
-
+        
         return result;
     }
     case PARTICIPANT_LEFT: {
-        if (!joinLeaveNotificationsDisabled()) {
-            const participant = getParticipantById(
-                store.getState(),
-                action.participant.id
-            );
-
-            // Do not display notifications for the virtual screenshare tiles.
-            if (participant
-                && !participant.local
-                && !isScreenShareParticipant(participant)
-                && !isWhiteboardParticipant(participant)
-                && !action.participant.isReplaced) {
-                dispatch(showParticipantLeftNotification(
-                    getParticipantDisplayName(state, participant.id)
-                ));
-            }
-        }
-
+         
         return next(action);
     }
     case PARTICIPANT_UPDATED: {
